@@ -86,8 +86,12 @@ class MyHTMLParser(HTMLParser):
     encounteredContent = False
     readingServerName = False
     readingServerLoad = False
+    readingTable = False
     currentServerName = ""
+    column = 0
     lowestLoad = 100
+    subPreference = 0
+    inTd = False
     global lowestLoadServer
     def handle_starttag(self,tag,attrs):
         if(tag == "td"):
@@ -95,6 +99,14 @@ class MyHTMLParser(HTMLParser):
                 self.readingServerName = True
             if(len(attrs) == 2):
                 self.readingServerLoad = True
+            self.inTd = True
+        elif(tag == "tr"):
+            self.column = 0
+            self.subPreference = 0
+        elif(tag == "table"):
+            if(len(attrs) == 1):
+                if(attrs[0][0] == "class" and attrs[0][1] == "remote"):
+                    self.readingTable = True
     def handle_data(self, data):
         if(self.readingServerName):
             self.currentServerName = data
@@ -106,12 +118,25 @@ class MyHTMLParser(HTMLParser):
                 load = 2
             elif(data == "High"):
                 load = 3
+            load = load - self.subPreference
+            print("load: " + str(load))
             serverLoadPairs.append((load,self.currentServerName))
+        if(self.column == 1 and self.readingTable and self.inTd):
+            memory = data.split()[0]
+            print("memory: " + memory)
+            self.subPreference = self.subPreference + int(memory) / 100.0 / 100.0
+        if(self.column == 2 and self.readingTable and self.inTd):
+            cpu = data.split()[0]
+            self.subPreference = self.subPreference + int(cpu) / 100.0
 
     def handle_endtag(self,tag):
         if(tag == "td"):
             self.readingServerName = False
             self.readingServerLoad = False
+            self.column = self.column + 1
+            self.inTd = False
+        elif(tag == "table"):
+            self.readingTable = False
 
 
             #print(attrs)
