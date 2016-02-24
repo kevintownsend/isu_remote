@@ -16,13 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-
 from html.parser import *
 from urllib.request import *
 from subprocess import *
 from sys import *
-
 
 user_info = "user_config.py"
 
@@ -119,11 +116,9 @@ class MyHTMLParser(HTMLParser):
             elif(data == "High"):
                 load = 3
             load = load - self.subPreference
-            print("load: " + str(load))
             serverLoadPairs.append((load,self.currentServerName))
         if(self.column == 1 and self.readingTable and self.inTd):
             memory = data.split()[0]
-            print("memory: " + memory)
             self.subPreference = self.subPreference + int(memory) / 100.0 / 100.0
         if(self.column == 2 and self.readingTable and self.inTd):
             cpu = data.split()[0]
@@ -137,26 +132,6 @@ class MyHTMLParser(HTMLParser):
             self.inTd = False
         elif(tag == "table"):
             self.readingTable = False
-
-
-            #print(attrs)
-#    def handle_comment(self, data):
-#        print("at comment")
-#        global lowestLoadServer
-#        if(self.encounteredContent):
-#            self.encounteredContent = self.encounteredContent - 1
-#            if(self.encounteredContent == 0):
-#                servers = data.split("\\n")
-#                for i in servers:
-#                    parts = i.split(',')
-#                    if(len(parts) > 6):
-#                        load = float(parts[4].split()[2]) - float(parts[2])
-#                        server = parts[0].lstrip("\'b\'")
-#                        server = parts[0].lstrip("\"b\'")
-#                        if(self.lowestLoad > load and not server.startswith("linuxremote")):
-#                            self.lowestLoad = load
-#                            lowestLoadServer = server
-#                        serverLoadPairs.append((load,server))
 
 try:
     f = urlopen("http://it.engineering.iastate.edu/ece-remote-servers")
