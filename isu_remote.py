@@ -20,8 +20,11 @@ from html.parser import *
 from urllib.request import *
 from subprocess import *
 from sys import *
+from os.path import *
 
+home = expanduser("~")
 user_info = "user_config.py"
+
 
 def _PrepareFileData(file_lines):
     # For each line, remove comments and trim all spaces at beginning and the end.
@@ -146,22 +149,16 @@ for line in f:
         break
     feed = feed + data
 
-parser = MyHTMLParser()
-parser.feed(feed)
-serverLoadPairs.sort()
-i = 0
+loginToBestServer = True
 
-if(len(serverLoadPairs)==0):
-    print("No servers listed, they might be down.")
-    pass
-
-for pair in serverLoadPairs:
-    if(i == 3):
-        break;
-    login = username + "@" + pair[1];
-    print("attempting to attach to " + login)
-    i = i + 1
-    try:
+if(len(argv) == 2):
+    if(argv[1] == "last"):
+        loginToBestServer = False
+        infoFile = open(home + "/.isu_remote_info", "r")
+        line = infoFile.readline()
+        server = line.split(':')[1].strip()
+        login = username + "@" + server
+        print("attempting to attach to " + login)
         if(password == ""):
             call(["ssh", "-X", login])
         else:
@@ -171,9 +168,44 @@ for pair in serverLoadPairs:
             elif(ret == 5):
                 print("Incorrect password")
 
-        break
-    except KeyboardInterrupt:
-        print("Trying next server")
+
+
+if(loginToBestServer):
+
+    parser = MyHTMLParser()
+    parser.feed(feed)
+    serverLoadPairs.sort()
+    i = 0
+
+    if(len(serverLoadPairs)==0):
+        print("No servers listed, they might be down.")
+        pass
+
+    choosenServer = ""
+    for pair in serverLoadPairs:
+        choosenServer = pair[1]
+        if(i == 3):
+            break
+        login = username + "@" + pair[1]
+        print("attempting to attach to " + login)
+        i = i + 1
+        try:
+            if(password == ""):
+                call(["ssh", "-X", login])
+            else:
+                ret = call(["sshpass", "-p", password, "ssh", "-X", login])
+                if(ret == 6):
+                    call(["ssh", "-X", login])
+                elif(ret == 5):
+                    print("Incorrect password")
+
+            break
+        except KeyboardInterrupt:
+            print("Trying next server")
+
+infoFile = open(home + "/.isu_remote_info", "w")
+infoFile.write("lastServer : " + choosenServer + "\n")
+infoFile.close()
 
 #NOTICE:
 # The software from Google contains significant changes. I am not a lawyer and am not sure of
